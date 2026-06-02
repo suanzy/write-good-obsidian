@@ -37,19 +37,19 @@ const writeGoodPlugin = ViewPlugin.fromClass(
         }
 
         #redecorate(update: any): void {
-			if (update.docChanged || update.focusChanged) {
-				this.decorations = this.#buildDecorations();
-				return;
-			}
+            const hasTriggerEffect = update.transactions.some((tr: Transaction) =>
+                tr.effects.some((e: StateEffect<null>) => e.is(TriggerWriteGoodChecksStateEffect))
+            );
 
-			const hasTriggerEffect = update.transactions.some((tr: Transaction) =>
-				tr.effects.some((e: StateEffect<null>) => e.is(TriggerWriteGoodChecksStateEffect))
-			);
+            // 1. Always update the state if the toggle was pressed
+            if (hasTriggerEffect) {
+                this.checksEnabled = this.#fileChecksEnabled();
+            }
 
-			if (hasTriggerEffect) {
-				this.checksEnabled = this.#fileChecksEnabled();
-				this.decorations = this.#buildDecorations();
-			}
+            // 2. Redraw the decorations if the document changed, focus changed, OR the toggle was pressed
+            if (update.docChanged || update.focusChanged || hasTriggerEffect) {
+                this.decorations = this.#buildDecorations();
+            }
         }
 
         #fileChecksEnabled(): boolean {
